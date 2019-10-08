@@ -224,12 +224,15 @@ function YaHT:Load()
 end
 
 function YaHT:COMBAT_LOG_EVENT_UNFILTERED()
-	 local _, event, _, casterID, _, _, _, targetID, targetName, _, _, spellID, name, _, extra_spell_id, _, _, resisted, blocked, absorbed = CombatLogGetCurrentEventInfo()
+	local _, event, _, casterID, _, _, _, targetID, targetName, _, _, spellID, name, _, extra_spell_id, _, _, resisted, blocked, absorbed = CombatLogGetCurrentEventInfo()
 	local _, rank, icon, castTime = GetSpellInfo(spellID)
 	local icon, castTime = select(3, GetSpellInfo(spellID))
+	
+	if (not casterID == UnitGUID("player") or (name ~= AimedShot and name ~= MultiShot) or (not YaHT.db.profile.showaimed and name == AimedShot) or (not YaHT.db.profile.showmulti and name == MultiShot) then return end
+	
 	if event == "SWING_DAMAGE" or event == "ENVIRONMENTAL_DAMAGE" or event == "RANGE_DAMAGE" or event == "SPELL_DAMAGE" then
 		if resisted or blocked or absorbed then return end
-		if targetID == UnitGUID("player") then
+		if name == AimedShot then
 			local maxValue
 			maxValue = 0
 			if not CastingBarFrame.maxValue == nil then
@@ -242,7 +245,7 @@ function YaHT:COMBAT_LOG_EVENT_UNFILTERED()
 			end
 		end
 		return
-	elseif event == "SPELL_CAST_SUCCESS" and spellID == 19801 and casterID == UnitGUID("player") then
+	elseif event == "SPELL_CAST_SUCCESS" and spellID == 19801 then
 		if YaHT.db.profile.tranqannounce then
 			local num
 			if YaHT.db.profile.announcetype == "CHANNEL" then
@@ -250,7 +253,7 @@ function YaHT:COMBAT_LOG_EVENT_UNFILTERED()
 			end
 			SendChatMessage(string.format(YaHT.db.profile.announcemsg,targetName), YaHT.db.profile.announcetype, nil, num or YaHT.db.profile.targetchannel)
 		end
-	elseif event == "SPELL_MISSED" and spellID == 19801 and casterID == UnitGUID("player") then
+	elseif event == "SPELL_MISSED" and spellID == 19801 then
 		if YaHT.db.profile.tranqannouncefail then
 			local num
 			if YaHT.db.profile.announcetype == "CHANNEL" then
@@ -259,8 +262,8 @@ function YaHT:COMBAT_LOG_EVENT_UNFILTERED()
 			SendChatMessage(string.format(YaHT.db.profile.announcefailmsg,targetName), YaHT.db.profile.announcetype, nil, num or YaHT.db.profile.targetchannel)
 		end
 	end
-	if (name ~= AimedShot and name ~= MultiShot) or (not YaHT.db.profile.showaimed and name == AimedShot) or (not YaHT.db.profile.showmulti and name == MultiShot) then return end
-	if event == "SPELL_CAST_START" and casterID == UnitGUID("player") then
+	
+	if event == "SPELL_CAST_START" then
 		self.mainFrame.casting = true
 		
 		if name == AimedShot then
